@@ -1,6 +1,8 @@
 const Configuration = require('../models/Configuration');
+const axios = require('axios');
+const path = 'http://localhost:3000/monitor/load'; //TMP
 
-const find = (req, res, next) => Configuration
+module.exports.find = (req, res, next) => Configuration
     .findOne({ _id: req.params.id })
     .then((data) => {
         if (!data) {
@@ -10,19 +12,29 @@ const find = (req, res, next) => Configuration
     })
     .catch((err) => next(err));
 
-const findAll = (req, res, next) => Configuration
+module.exports.findAll = (req, res, next) => Configuration
     .find({})
     .then((data) => {
         res.json(data);
     })
     .catch((err) => next(err));
 
-const create = (req, res, next) => Configuration
+module.exports.create = (req, res, next) => Configuration
     .create(req.body)
-    .then((config) => res.json(config))
+    .then((configuration) => {
+        axios.post(path, configuration)
+            .then((mRes) => {
+                const message = mRes.data.message;
+                res.json({ configuration, message });
+            })
+            .catch((err) => {
+                res.json({ configuration, message: 'monitor not responding' });
+                next(err);
+            });
+    })
     .catch((err) => next(err));
 
-const update = (req, res, next) => Configuration
+module.exports.update = (req, res, next) => Configuration
     .findOneAndUpdate({ _id: req.params.id }, req.body, { new: true })
     .then((config) => {
         if (!config) {
@@ -32,7 +44,7 @@ const update = (req, res, next) => Configuration
     })
     .catch((err) => next(err));
 
-const remove = (req, res, next) => Configuration
+module.exports.remove = (req, res, next) => Configuration
     .findOneAndDelete({ _id: req.params.id })
     .then((config) => {
         if (!config) {
@@ -41,5 +53,3 @@ const remove = (req, res, next) => Configuration
         res.json(config);
     })
     .catch((err) => next(err));
-
-module.exports = { find, findAll, create, update, remove };

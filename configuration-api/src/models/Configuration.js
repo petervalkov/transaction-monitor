@@ -4,15 +4,15 @@ const configurationSchema = mongoose.Schema(
     {
         from: {
             type: String,
-            required: true,
+            required: false,
         },
         to: {
             type: String,
-            required: true,
+            required: false,
         },
         amount: {
             type: Number,
-            required: true,
+            required: false,
         },
     },
     {
