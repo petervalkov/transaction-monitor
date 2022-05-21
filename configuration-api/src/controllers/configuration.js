@@ -1,12 +1,13 @@
 const Configuration = require('../models/Configuration');
 const axios = require('axios');
+const AppError = require('../utils/AppError');
 const path = 'http://localhost:3000/monitor/load'; //TMP
 
 module.exports.find = (req, res, next) => Configuration
     .findOne({ _id: req.params.id })
     .then((data) => {
         if (!data) {
-            throw new Error('not found');
+            next(new AppError(404, 'configuration not found'));
         }
         res.json(data);
     })
@@ -29,7 +30,7 @@ module.exports.create = (req, res, next) => Configuration
             })
             .catch((err) => {
                 res.json({ configuration, message: 'monitor not responding' });
-                next(err);
+                next(err); //CHECK
             });
     })
     .catch((err) => next(err));
@@ -38,7 +39,7 @@ module.exports.update = (req, res, next) => Configuration
     .findOneAndUpdate({ _id: req.params.id }, req.body, { new: true })
     .then((config) => {
         if (!config) {
-            throw new Error('not found');
+            next(new AppError(404, 'configuration not found'));
         }
         res.json(config);
     })
@@ -48,7 +49,7 @@ module.exports.remove = (req, res, next) => Configuration
     .findOneAndDelete({ _id: req.params.id })
     .then((config) => {
         if (!config) {
-            throw new Error('not found');
+            next(new AppError(404, 'configuration not found'));
         }
         res.json(config);
     })

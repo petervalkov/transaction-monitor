@@ -1,11 +1,11 @@
 const router = require('express').Router();
+const inputValidator = require('./middlewares/input-validator');
 const configuration = require('./controllers/configuration');
-//const Validator = require('./middlewares/Validator');
 
-router.get('/', configuration.findAll);
-router.post('/create', configuration.create);
-router.get('/:id', configuration.find);
-router.patch('/update/:id', configuration.update);
+router.post('/create', inputValidator('configuration'), configuration.create);
+router.patch('/:id', inputValidator('configuration'), configuration.update);
 router.delete('/:id', configuration.remove);
+router.get('/:id', configuration.find);
+router.get('/', configuration.findAll);
 
 module.exports = router;

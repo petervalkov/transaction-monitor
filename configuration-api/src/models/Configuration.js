@@ -10,7 +10,15 @@ const configurationSchema = mongoose.Schema(
             type: String,
             required: false,
         },
-        amount: {
+        minValue: {
+            type: Number,
+            required: false,
+        },
+        maxValue: {
+            type: Number,
+            required: false,
+        },
+        type: {
             type: Number,
             required: false,
         },

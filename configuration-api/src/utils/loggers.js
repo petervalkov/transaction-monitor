@@ -1,6 +1,6 @@
 const winston = require('winston');
 
-const development = winston.createLogger({
+module.exports.development = winston.createLogger({
     level: 'info',
     format: winston.format.json(),
     transports: [
@@ -14,7 +14,7 @@ const development = winston.createLogger({
     ],
 });
 
-const production = winston.createLogger({
+module.exports.production = winston.createLogger({
     level: 'info',
     format: winston.format.json(),
     transports: [
@@ -25,5 +25,3 @@ const production = winston.createLogger({
         })
     ],
 });
-
-module.exports = {development, production};
