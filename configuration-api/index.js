@@ -1,34 +1,27 @@
-const dotenv = require('dotenv');
-const express = require('express');
 const mongoose = require('mongoose');
-const routes = require('./src/routes');
-const AppError = require('./src/utils/AppError');
+const dotenv = require('dotenv');
+const app = require('./src/app');
 const loggers = require('./src/utils/loggers');
-
-const errorHandler = require('./src/middlewares/error-handler');
+const messages = require('./src/utils/messages');
 
 dotenv.config();
-
 const logger = loggers[process.env.ENVIRONMENT];
 
-const app = express();
-app.use(express.json());
-app.use('/config', routes);
-app.all('*', (req, res, next) => {
-    next(new AppError(404, 'not found'));
-});
-
-app.use(errorHandler);
-
-mongoose.connect(process.env.DB_CONNECTION).then(() => {
-    logger.info('connected to db');
-    app.listen(process.env.PORT, () => {
-        logger.info('listening on ' + process.env.PORT);
+let server;
+mongoose.connect(process.env.DB_CONNECTION)
+    .then(() => {
+        logger.info(messages.info.dbSuccess);
+        server = app.listen(process.env.PORT, () => {
+            logger.log('info', messages.info.serverStarted, process.env.PORT);
+        });
+    })
+    .catch((err) => {
+        logger.error({ private: true, level: 'error', message: err.stack });
+        logger.info(messages.error.dbFail);
     });
-});
 
 process.on('uncaughtException', (err) => {
-    logger.info(err.message);
+    logger.error({ private: true, level: 'error', message: err.stack });
 });
 
 process.on('SIGINT', closeApp);
@@ -36,10 +29,10 @@ process.on('SIGTERM', closeApp);
 
 function closeApp() {
     mongoose.connection.close(() => {
-        logger.info('db connection closed');
-        process.exit(0);
-        // app.close(() => {
-        //     logger.info('server closed');
-        // });
+        logger.info(messages.info.dbClosed);
+        server.close(() => {
+            logger.info(messages.info.dbClosed);
+            process.exit(0);
+        });
     });
 }

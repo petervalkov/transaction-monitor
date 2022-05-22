@@ -28,6 +28,4 @@ const configurationSchema = mongoose.Schema(
     }
 );
 
-const Configuration = mongoose.model('Configuration', configurationSchema);
-
-module.exports = Configuration;
+module.exports = mongoose.model('Configuration', configurationSchema);

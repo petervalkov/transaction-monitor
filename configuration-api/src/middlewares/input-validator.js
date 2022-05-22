@@ -9,5 +9,5 @@ module.exports = (type) => (req, res, next) => schema[type]
             next(new AppError(400, err.message));
         } else {
             next(err);
-        }   
+        }
     });

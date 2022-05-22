@@ -1,28 +1,27 @@
 const Joi = require('joi');
+const messages = require('./messages');
 
 module.exports.configuration = Joi.object({
     from: Joi.string()
         .pattern(new RegExp('^0x[a-fA-F0-9]{40}$'))
-        .message('invalid from address'),
+        .message(messages.error.invalidFrom),
 
     to: Joi.string()
         .pattern(new RegExp('^0x[a-fA-F0-9]{40}$'))
-        .message('invalid to address'),
+        .message(messages.error.invalidTo),
 
     minValue: Joi.number()
         .integer()
-        .min(0)
-        .message('invalid min value'),
+        .min(0),
 
     maxValue: Joi.number()
         .integer()
-        .min(0)
-        .message('invalid max value'),
+        .min(0),
 
     type: Joi.number()
         .integer()
         .min(1)
         .max(3)
-        .message('invalid type')
+        .message(messages.error.invalidType)
 
-}).min(1).message('empty object');
+}).min(1).message(messages.error.emptyObject);
