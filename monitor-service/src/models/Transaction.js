@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-module.exports = mongoose.Schema(
+const transactionSchema = mongoose.Schema(
     {
         hash: {
             type: String,
@@ -15,3 +15,5 @@ module.exports = mongoose.Schema(
         timestamps: true,
     }
 );
+
+module.exports = mongoose.model('Transaction', transactionSchema);

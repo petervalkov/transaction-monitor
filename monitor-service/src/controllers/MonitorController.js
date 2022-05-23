@@ -1,22 +1,20 @@
 module.exports = class MonitorController {
-    constructor({ monitor, logger, configurationService }) {
+    constructor({ monitor, logger, configurationService, messages }) {
         this.logger = logger;
         this.monitor = monitor;
         this.configurationService = configurationService;
+        this.messages = messages;
     }
 
     load(req, res, next) {
-        this.configurationService
-            .create({
-                configuration: JSON.stringify(req.body),
-                requestedBy: req.body._id
-            }).then((cnf) => {
-                this.monitor.setRule(req.body, cnf._id);
-                res.json({ message: 'configuration loaded in monitor' });
-                this.logger.info('configuration loaded')
+        this.configurationService.create(JSON.stringify(req.body), req.body._id)
+            .then((configuration) => {
+                this.logger.info(this.messages.info.configCreated);
+                this.monitor.setRule(req.body, configuration._id);
+                res.json({ status: 200, message: this.messages.info.configCreated });
             }).catch((err) => {
-                res.json({ message: 'configuration not loaded' });
+                res.json({ status: 500, message: this.messages.error.laodFailed });
                 next(err);
-            })
-    };
-}
+            });
+    }
+};

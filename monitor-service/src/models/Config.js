@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-module.exports = mongoose.Schema(
+const configSchema = mongoose.Schema(
     {
         configuration: {
             type: String,
@@ -21,3 +21,5 @@ module.exports = mongoose.Schema(
         timestamps: true,
     }
 );
+
+module.exports = mongoose.model('Config', configSchema);
