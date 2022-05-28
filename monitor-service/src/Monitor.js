@@ -1,8 +1,7 @@
 module.exports = class Monitor {
-    constructor(web3, engine, transactionService, configurationService, logger, messages) {
+    constructor({web3, rulesService, transactionService, configurationService, logger, messages}) {
         this.web3 = web3;
-        this.engine = engine;
-        this.rule = engine.rules[0];
+        this.rulesService = rulesService;
         this.logger = logger;
         this.transactionService = transactionService;
         this.configurationService = configurationService;
@@ -25,9 +24,7 @@ module.exports = class Monitor {
     }
 
     setRule(configRule, requester) {
-        this.rule.setConditions({ all: this.parseConfiguration(configRule) });
-        this.rule.requester = requester;
-        this.engine.updateRule(this.rule);
+        this.rulesService.setRule(configRule, requester);
         this.logger.info(this.messages.info.ruleLoaded, configRule);
         if(!this.subscription){
             this.subscribe();
@@ -49,9 +46,9 @@ module.exports = class Monitor {
         this.logger.info(this.messages.info.checking, data.number);
         this.web3.eth.getBlock(data.number, true).then(block => {
             block?.transactions.forEach(trx => {
-                this.engine.run(trx).then((res) => {
+                this.rulesService.run(trx).then((res) => {
                     if (res.results.length > 0) {
-                        this.transactionService.create(trx.hash, this.engine.rules[0].requester)
+                        this.transactionService.create(trx.hash, this.rulesService.getRuleRequester())
                             .then((transaction) => {
                                 this.logger.info(this.messages.info.trxFound, transaction.hash);
                             }).catch((err) => {
@@ -62,23 +59,5 @@ module.exports = class Monitor {
                 });
             });
         });
-    }
-
-    parseConfiguration(configuration) {
-        const alias = {minValue: 'value', maxValue: 'value'};
-        const operators = { 
-            from: 'equal', 
-            to: 'equal', 
-            maxValue: 'lessThanInclusive', 
-            minValue: 'greaterThanInclusive', 
-            type: 'equal'
-        };
-        return Object.entries(configuration)
-            .filter(([fact, value]) => operators[fact] !== undefined)
-            .map(([fct, value]) => {
-                const operator = operators[fct];
-                const fact = alias[fct] ? alias[fct] : fct;
-                return { fact, operator, value };
-            });
     }
 };

@@ -5,8 +5,9 @@ const Web3 = require('web3');
 const express = require('express');
 
 const Monitor = require('./Monitor');
+const RuleEngine = require('./lib/RuleEngine');
+const RuleService = require('./services/RuleService');
 const MonitorController = require('./controllers/MonitorController');
-const { Engine, Rule } = require('json-rules-engine');
 const loggers = require('./utils/loggers');
 const messages = require('./utils/messages');
 const configRepo = require('./models/Config');
@@ -23,8 +24,21 @@ const container = awilix.createContainer({
 const transactionService = createTransactionService(transactionRepo);
 const configurationService = createConfigurationService(configRepo);
 const web3 = new Web3(new Web3.providers.WebsocketProvider(process.env.ENDPOINT));
-const rulesEngine = new Engine([new Rule()], { allowUndefinedFacts: true });
-const monitor = new Monitor(web3, rulesEngine, transactionService, configurationService, logger, messages);
+
+container.register({
+    ruleOptions: awilix.asValue({ allowUndefinedFacts: true }),
+    ruleEngine: awilix.asClass(RuleEngine).singleton(),
+    rulesService: awilix.asClass(RuleService).singleton(),
+    web3: awilix.asValue(web3),
+    transactionService: awilix.asValue(transactionService),
+    configurationService: awilix.asValue(configurationService),
+    messages: awilix.asValue(messages),
+    logger: awilix.asValue(logger),
+    monitor: awilix.asClass(Monitor).singleton(),
+    monitorController: awilix.asClass(MonitorController).scoped()
+});
+
+const monitor = new Monitor(container.cradle);
 monitor.start();
 
 const app = express();
@@ -56,14 +70,6 @@ app.use((err, req, res, next) => {
     } else {
         res.json({ status: 500, message: messages.error.internalError });
     }
-});
-
-container.register({
-    configurationService: awilix.asValue(configurationService),
-    messages: awilix.asValue(messages),
-    logger: awilix.asValue(logger),
-    monitor: awilix.asValue(monitor),
-    monitorController: awilix.asClass(MonitorController).scoped()
 });
 
 module.exports = app;
