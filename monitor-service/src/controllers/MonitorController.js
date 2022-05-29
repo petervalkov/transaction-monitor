@@ -2,8 +2,8 @@ module.exports = class MonitorController {
     constructor({ monitor, logger, configurationService, messages }) {
         this.logger = logger;
         this.monitor = monitor;
-        this.configurationService = configurationService;
         this.messages = messages;
+        this.configurationService = configurationService;
     }
 
     load(req, res, next) {

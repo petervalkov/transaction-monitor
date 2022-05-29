@@ -1,11 +1,11 @@
 module.exports = class Monitor {
-    constructor({web3, rulesService, transactionService, configurationService, logger, messages}) {
-        this.web3 = web3;
-        this.rulesService = rulesService;
+    constructor({blockchainService, rulesService, transactionService, configurationService, logger, messages}) {
         this.logger = logger;
+        this.messages = messages;
+        this.rulesService = rulesService;
+        this.blockchainService = blockchainService;
         this.transactionService = transactionService;
         this.configurationService = configurationService;
-        this.messages = messages;
     }
 
     start() {
@@ -14,7 +14,7 @@ module.exports = class Monitor {
                 if(res){
                     const configObj = JSON.parse(res.configuration);
                     this.logger.info(this.messages.info.configFound);
-                    this.setRule(configObj, configObj._id);
+                    this.setRule.call(this, configObj, configObj._id);
                 } else {
                     this.logger.info(this.messages.info.noConfig);
                 }
@@ -32,7 +32,7 @@ module.exports = class Monitor {
     }
 
     subscribe() {
-        this.subscription = this.web3.eth.subscribe('newBlockHeaders')
+        this.subscription = this.blockchainService.subscribe('newBlockHeaders')
             .on('connected', () => {
                 this.logger.info(this.messages.info.ethSuccess);
             })
@@ -44,7 +44,7 @@ module.exports = class Monitor {
 
     getBlock(data) {
         this.logger.info(this.messages.info.checking, data.number);
-        this.web3.eth.getBlock(data.number, true).then(block => {
+        this.blockchainService.getBlock(data.number, true).then(block => {
             block?.transactions.forEach(trx => {
                 this.rulesService.run(trx).then((res) => {
                     if (res.results.length > 0) {

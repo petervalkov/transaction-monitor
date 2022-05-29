@@ -1,18 +1,20 @@
 /* eslint-disable no-unused-vars */
 const dotenv = require('dotenv');
 const awilix = require('awilix');
-const Web3 = require('web3');
 const express = require('express');
 
 const Monitor = require('./Monitor');
 const RuleEngine = require('./lib/RuleEngine');
 const RuleService = require('./services/RuleService');
+const EthBlockchain = require('./lib/EthBlockchain');
+const BlockchainService = require('./services/BlockchainService');
 const MonitorController = require('./controllers/MonitorController');
+const TransactionService = require('./services/TransactionService');
+const ConfigurationService = require('./services/ConfigurationService');
 const loggers = require('./utils/loggers');
 const messages = require('./utils/messages');
-const configRepo = require('./models/Config');
 const transactionRepo = require('./models/Transaction');
-const { createTransactionService, createConfigurationService } = require('./utils/factory');
+const configurationRepo = require('./models/Config');
 
 dotenv.config();
 const logger = loggers[process.env.ENVIRONMENT];
@@ -21,25 +23,28 @@ const container = awilix.createContainer({
     injectionMode: awilix.InjectionMode.PROXY
 });
 
-const transactionService = createTransactionService(transactionRepo);
-const configurationService = createConfigurationService(configRepo);
-const web3 = new Web3(new Web3.providers.WebsocketProvider(process.env.ENDPOINT));
-
 container.register({
+    endpoint: awilix.asValue(process.env.ENDPOINT),
+    blockchain: awilix.asClass(EthBlockchain).singleton(),
+    blockchainService: awilix.asClass(BlockchainService).singleton(),
     ruleOptions: awilix.asValue({ allowUndefinedFacts: true }),
     ruleEngine: awilix.asClass(RuleEngine).singleton(),
     rulesService: awilix.asClass(RuleService).singleton(),
-    web3: awilix.asValue(web3),
-    transactionService: awilix.asValue(transactionService),
-    configurationService: awilix.asValue(configurationService),
+    transactionRepo: awilix.asValue(transactionRepo),
+    transactionService: awilix.asClass(TransactionService),
+    configurationRepo: awilix.asValue(configurationRepo),
+    configurationService: awilix.asClass(ConfigurationService),
     messages: awilix.asValue(messages),
     logger: awilix.asValue(logger),
-    monitor: awilix.asClass(Monitor).singleton(),
     monitorController: awilix.asClass(MonitorController).scoped()
 });
 
 const monitor = new Monitor(container.cradle);
 monitor.start();
+
+container.register({
+    monitor: awilix.asValue(monitor),
+});
 
 const app = express();
 
