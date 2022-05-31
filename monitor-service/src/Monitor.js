@@ -14,7 +14,7 @@ module.exports = class Monitor {
                 if(res){
                     const configObj = JSON.parse(res.configuration);
                     this.logger.info(this.messages.info.configFound);
-                    this.setRule.call(this, configObj, configObj._id);
+                    this.setRule(configObj, res._id);
                 } else {
                     this.logger.info(this.messages.info.noConfig);
                 }
@@ -53,7 +53,6 @@ module.exports = class Monitor {
                                 this.logger.info(this.messages.info.trxFound, transaction.hash);
                             }).catch((err) => {
                                 this.logger.error(this.messages.error.trxStoreFailed, trx.hash);
-                                next(err);
                             });
                     }
                 });

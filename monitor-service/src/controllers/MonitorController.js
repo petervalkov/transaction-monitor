@@ -1,8 +1,9 @@
 module.exports = class MonitorController {
-    constructor({ monitor, logger, configurationService, messages }) {
+    constructor({ monitor, logger, configurationService, transactionService, messages }) {
         this.logger = logger;
         this.monitor = monitor;
         this.messages = messages;
+        this.transactionService = transactionService;
         this.configurationService = configurationService;
     }
 
@@ -15,6 +16,27 @@ module.exports = class MonitorController {
             }).catch((err) => {
                 res.json({ status: 500, message: this.messages.error.laodFailed });
                 next(err);
+            });
+    }
+
+    getConfigurations(req, res, next) {
+        this.configurationService.findByRequester(req.params.id)
+            .then((data) => {
+                const result = data.map(x => {
+                    return {id: x._id, configuration: JSON.parse(x.configuration)};
+                });
+                res.json(result);
+            }).catch((err) => {
+                res.json({ status: 500, message: this.messages.error.internalError });
+            });
+    }
+
+    getTransactions(req, res, next) {
+        this.transactionService.findByConfiguration(req.params.id)
+            .then((data) => {
+                res.json(data);
+            }).catch((err) => {
+                res.json({ status: 500, message: this.messages.error.internalError });
             });
     }
 };

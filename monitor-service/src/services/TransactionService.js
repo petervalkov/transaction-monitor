@@ -3,7 +3,11 @@ module.exports = class TransactionService {
         this.transactionRepo = transactionRepo;
     }
 
-    create(hash, config) {
-        return this.transactionRepo.create({ hash, config });
+    create(hash, configuration) {
+        return this.transactionRepo.create({ hash, configuration });
+    }
+
+    findByConfiguration(id){
+        return this.transactionRepo.find({ configuration: id});
     }
 };

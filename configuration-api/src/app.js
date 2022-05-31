@@ -1,18 +1,20 @@
 /* eslint-disable no-unused-vars */
-const express = require('express');
+const awilix = require('awilix');
 const dotenv = require('dotenv');
+const express = require('express');
 const httpClient = require('axios');
 dotenv.config();
 
-const ConfigurationController = require('./controllers/ConfigurationController');
 const AppError = require('./utils/AppError');
+const configService = require('./services/ConfigurationService');
+const monitorService = require('./services/MonitorService');
+const MonitorController = require('./controllers/MonitorController');
+const ConfigurationController = require('./controllers/ConfigurationController');
 const configRepo = require('./models/Configuration');
-const inputValidator = require('./middlewares/input-validator');
 const loggers = require('./utils/loggers');
-const factory = require('./utils/factory');
 const messages = require('./utils/messages');
+const inputValidator = require('./middlewares/input-validator');
 
-const awilix = require('awilix');
 const container = awilix.createContainer({
     injectionMode: awilix.InjectionMode.PROXY
 });
@@ -28,15 +30,20 @@ app.use((req, res, next) => {
     return next();
 });
 
-const router = express.Router();
+const configRouter = express.Router();
+configRouter.post('/', inputValidator('configuration'), (req, res, next) => new ConfigurationController(req.container.cradle).create(req, res, next));
+configRouter.patch('/:id', inputValidator('configuration'), (req, res, next) => new ConfigurationController(req.container.cradle).update(req, res, next));
+configRouter.delete('/:id', (req, res, next) => new ConfigurationController(req.container.cradle).remove(req, res, next));
+configRouter.get('/:id', (req, res, next) => new ConfigurationController(req.container.cradle).find(req, res, next));
+configRouter.get('/', (req, res, next) => new ConfigurationController(req.container.cradle).findAll(req, res, next));
 
-router.post('/', inputValidator('configuration'), (req, res, next) => new ConfigurationController(req.container.cradle).create(req, res, next));
-router.patch('/:id', inputValidator('configuration'), (req, res, next) => new ConfigurationController(req.container.cradle).update(req, res, next));
-router.delete('/:id', (req, res, next) => new ConfigurationController(req.container.cradle).remove(req, res, next));
-router.get('/:id', (req, res, next) => new ConfigurationController(req.container.cradle).find(req, res, next));
-router.get('/', (req, res, next) => new ConfigurationController(req.container.cradle).findAll(req, res, next));
+const monitorRouter = express.Router();
+monitorRouter.post('/:id', (req, res, next) => new MonitorController(req.container.cradle).load(req, res, next));
+monitorRouter.get('/config/:id', (req, res, next) => new MonitorController(req.container.cradle).getConfigurations(req, res, next));
+monitorRouter.get('/trx/:id', (req, res, next) => new MonitorController(req.container.cradle).getTransactions(req, res, next));
 
-app.use('/config', router);
+app.use('/config', configRouter);
+app.use('/monitor', monitorRouter);
 
 app.all('*', (req, res, next) => {
     next(new AppError(404, messages.error.notFound));
@@ -54,13 +61,13 @@ app.use((err, req, res, next) => {
 });
 
 container.register({
-    messages: awilix.asValue(messages),
     logger: awilix.asValue(logger),
+    messages: awilix.asValue(messages),
     monitorAddress: awilix.asValue(process.env.MONITOR_ADDRESS),
     httpClient: awilix.asValue(httpClient),
     configRepo: awilix.asValue(configRepo),
-    monitorService: awilix.asFunction(factory.createMonitorService),
-    configService: awilix.asFunction(factory.createConfigService)
+    configService: awilix.asClass(configService),
+    monitorService: awilix.asClass(monitorService),
 });
 
 module.exports = app;

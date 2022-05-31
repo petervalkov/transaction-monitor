@@ -24,6 +24,8 @@ const container = awilix.createContainer({
 });
 
 container.register({
+    logger: awilix.asValue(logger),
+    messages: awilix.asValue(messages),
     endpoint: awilix.asValue(process.env.ENDPOINT),
     blockchain: awilix.asClass(EthBlockchain).singleton(),
     blockchainService: awilix.asClass(BlockchainService).singleton(),
@@ -34,8 +36,6 @@ container.register({
     transactionService: awilix.asClass(TransactionService),
     configurationRepo: awilix.asValue(configurationRepo),
     configurationService: awilix.asClass(ConfigurationService),
-    messages: awilix.asValue(messages),
-    logger: awilix.asValue(logger),
     monitorController: awilix.asClass(MonitorController).scoped()
 });
 
@@ -51,10 +51,9 @@ const app = express();
 app.use(express.json());
 
 const router = express.Router();
-router.post('/load', (req, res, next) => {
-    const monitor = new MonitorController(req.container.cradle);
-    return monitor.load(req, res, next);
-});
+router.post('/load', (req, res, next) => new MonitorController(req.container.cradle).load(req, res, next));
+router.get('/load/config/:id', (req, res, next) => new MonitorController(req.container.cradle).getConfigurations(req, res, next));
+router.get('/load/trx/:id', (req, res, next) => new MonitorController(req.container.cradle).getTransactions(req, res, next));
 
 app.use((req, res, next) => {
     req.container = container.createScope();

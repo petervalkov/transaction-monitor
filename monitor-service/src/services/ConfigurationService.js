@@ -10,4 +10,12 @@ module.exports = class ConfigurationService {
     findLatest() {
         return this.configurationRepo.findOne({}, {}, {sort:{$natural:-1}});
     }
+
+    findByRequester(id) {
+        return this.configurationRepo.find({ requestedBy: id });
+    }
+
+    findAll() {
+        return this.configurationRepo.find();
+    }
 };
